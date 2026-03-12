@@ -127,7 +127,7 @@ export async function generateAIMessage(formData: FormData) {
   throw new Error("Este lead já está em atendimento humano.");
   }
 
-  const history = lead.messages.map((m) => ({
+  const history = lead.messages.map((m: { role: string; content: string }) => ({
     role:
       m.role === "assistant"
         ? "assistant"
