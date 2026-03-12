@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
             }
             `.trim(),
         }
-        ...history,
+        history,
       ],
     });
 
