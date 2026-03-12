@@ -131,7 +131,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             Nenhum lead encontrado com esses filtros.
           </div>
         ) : (
-          leads.map((lead) => (
+          leads.map((lead: any) => (
             <div
               key={lead.id}
               className="rounded-2xl bg-white p-5 shadow"
