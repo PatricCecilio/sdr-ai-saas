@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { openai } from "@/lib/openai";
+import { OpenAI } from "openai/index.js";
 
 export async function createLead(formData: FormData) {
   const name = formData.get("name")?.toString().trim();
@@ -136,33 +137,40 @@ export async function generateAIMessage(formData: FormData) {
     content: m.content,
   }));
 
+
+
+  const historyMessages =
+    (history ?? []) as OpenAI.Chat.Completions.ChatCompletionMessageParam[];
+
+  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+    {
+      role: "system",
+      content:
+        "Você é um SDR humano e simpático que conversa com leads pelo WhatsApp. Responda de forma natural e curta.",
+    },
+    ...historyMessages,
+  ];
+
   const completion = await openai.chat.completions.create({
-    model: "gpt-4.1-mini",
-    messages: [
-      {
-        role: "system",
-        content:
-          "Você é um SDR humano e simpático que conversa com leads pelo WhatsApp. Responda de forma natural e curta.",
-      },
-      ...history,
-    ],
+    model: "gpt-4o-mini",
+    messages,
   });
 
-  const message = completion.choices[0].message.content;
+  const responseText = completion.choices[0]?.message?.content ?? "";
 
   await prisma.message.create({
     data: {
       leadId,
       role: "assistant",
-      content: message || "",
+      content: responseText,
     },
   });
 
-  revalidatePath(`/conversation?id=${leadId}`);
-  redirect(`/conversation?id=${leadId}`);
-}
+    revalidatePath(`/conversation?id=${leadId}`);
+    redirect(`/conversation?id=${leadId}`);
+  }
 
-export async function markLeadReadyForCloser(formData: FormData) {
+  export async function markLeadReadyForCloser(formData: FormData) {
   const leadId = formData.get("leadId")?.toString();
 
   if (!leadId) {
