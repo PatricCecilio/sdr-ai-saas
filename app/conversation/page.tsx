@@ -237,7 +237,7 @@ export default async function ConversationPage({
             {lead.messages.length === 0 ? (
               <p className="text-gray-500">Nenhuma mensagem ainda.</p>
             ) : (
-              lead.messages.map((message) => {
+              lead.messages.map((message: { id: string; role: string; content: string; createdAt: Date | string }) => {
                 const isClient = message.role === "user";
                 const isAssistant = message.role === "assistant";
                 const isHuman = message.role === "human";
