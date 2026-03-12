@@ -16,22 +16,22 @@ export default async function Home() {
   });
 
   const hotLeads = leads.filter(
-    (lead) => lead.handoffStatus === "PRONTO_CLOSER"
+    (lead : any) => lead.handoffStatus === "PRONTO_CLOSER"
   );
 
   const humanLeads = leads.filter(
-    (lead) => lead.handoffStatus === "EM_ATENDIMENTO_HUMANO"
+    (lead : any) => lead.handoffStatus === "EM_ATENDIMENTO_HUMANO"
   );
 
   const warmLeads = leads.filter(
-    (lead) =>
+    (lead : any) =>
       lead.leadTemperature === "morno" &&
       lead.handoffStatus !== "PRONTO_CLOSER" &&
       lead.handoffStatus !== "EM_ATENDIMENTO_HUMANO"
   );
 
   const newLeads = leads.filter(
-    (lead) =>
+    (lead : any) =>
       lead.status === "NOVO" &&
       lead.handoffStatus !== "PRONTO_CLOSER" &&
       lead.handoffStatus !== "EM_ATENDIMENTO_HUMANO"
