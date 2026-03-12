@@ -1,13 +1,12 @@
 import { prisma } from "@/lib/prisma";
-
 export default async function AnalyticsPage() {
   const leads = await prisma.lead.findMany();
 
   const total = leads.length;
-  const quentes = leads.filter((l: any) => l.handoffStatus === "PRONTO_CLOSER")
-  const mornos = leads.filter((l) => l.leadTemperature === "morno").length;
-  const frios = leads.filter((l) => l.leadTemperature === "frio").length;
-  const novos = leads.filter((l) => l.status === "NOVO").length;
+  const quentes = leads.filter((l: any) => l.handoffStatus === "PRONTO_CLOSER").length;
+  const mornos = leads.filter((l: any) => l.leadTemperature === "morno").length;
+  const frios = leads.filter((l: any) => l.leadTemperature === "frio").length;
+  const novos = leads.filter((l: any) => l.status === "NOVO").length;
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -34,8 +33,8 @@ export default async function AnalyticsPage() {
           <p className="text-2xl font-bold">{frios}</p>
         </div>
 
-        <div className="rounded-xl bg-indigo-100 p-4">
-          <p className="text-sm text-indigo-700">Novos</p>
+        <div className="rounded-xl bg-green-100 p-4">
+          <p className="text-sm text-green-700">Novos</p>
           <p className="text-2xl font-bold">{novos}</p>
         </div>
       </div>
