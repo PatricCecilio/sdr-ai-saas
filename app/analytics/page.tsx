@@ -4,7 +4,7 @@ export default async function AnalyticsPage() {
   const leads = await prisma.lead.findMany();
 
   const total = leads.length;
-  const quentes = leads.filter((l) => l.handoffStatus === "PRONTO_CLOSER").length;
+  const quentes = leads.filter((l: any) => l.handoffStatus === "PRONTO_CLOSER")
   const mornos = leads.filter((l) => l.leadTemperature === "morno").length;
   const frios = leads.filter((l) => l.leadTemperature === "frio").length;
   const novos = leads.filter((l) => l.status === "NOVO").length;
