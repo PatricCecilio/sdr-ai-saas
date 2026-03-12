@@ -153,8 +153,8 @@ export async function POST(req: NextRequest) {
                 "handoffStatus": "PENDENTE|PRONTO_CLOSER"
               }
             }
-            `.trim(),
-        }
+            `.trim()
+        },
         history,
       ],
     });
