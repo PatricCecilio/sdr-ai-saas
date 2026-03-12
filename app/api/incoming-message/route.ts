@@ -5,37 +5,42 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-type HistoryMessage = {
-  role: "user" | "assistant" | "system";
-  content: string;
-};
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const message = body.message ?? "";
+    const message =
+      typeof body.message === "string" ? body.message.trim() : "";
 
-    const history: HistoryMessage[] = Array.isArray(body.history)
-      ? body.history.map((msg: any) => ({
-          role: msg.role,
-          content: msg.content,
-        }))
+    const history = Array.isArray(body.history)
+      ? (body.history.filter(
+          (
+            msg: unknown
+          ): msg is OpenAI.Chat.Completions.ChatCompletionMessageParam =>
+            typeof msg === "object" &&
+            msg !== null &&
+            "role" in msg &&
+            "content" in msg &&
+            typeof (msg as { role?: unknown }).role === "string" &&
+            ["system", "user", "assistant"].includes(
+              (msg as { role: string }).role
+            ) &&
+            typeof (msg as { content?: unknown }).content === "string"
+        ) as OpenAI.Chat.Completions.ChatCompletionMessageParam[])
       : [];
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `
+    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+      {
+        role: "system",
+        content: `
 Você é um SDR humano e simpático que conversa com leads pelo WhatsApp.
 
-Classifique o lead:
+Seu objetivo é responder de forma natural, curta e útil, como um SDR real.
 
-frio = curioso
-morno = interessado
-quente = quer proposta, preço, reunião ou contratação
+Classifique o lead assim:
+- frio = curioso
+- morno = interessado
+- quente = quer proposta, preço, reunião ou contratação
 
 Se o lead pedir valores, proposta, reunião ou contratação:
 handoffStatus = "PRONTO_CLOSER"
@@ -43,7 +48,7 @@ handoffStatus = "PRONTO_CLOSER"
 Caso contrário:
 handoffStatus = "PENDENTE"
 
-Retorne SOMENTE JSON válido no formato:
+Retorne SOMENTE um JSON válido no formato:
 
 {
   "reply": "mensagem da IA para o lead",
@@ -57,29 +62,70 @@ Retorne SOMENTE JSON válido no formato:
     "handoffStatus": "PENDENTE|PRONTO_CLOSER"
   }
 }
-          `.trim(),
-        },
+        `.trim(),
+      },
+      ...history,
+      {
+        role: "user",
+        content: message || "Olá",
+      },
+    ];
 
-        ...history,
-
-        {
-          role: "user",
-          content: message,
-        },
-      ],
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages,
+      temperature: 0.7,
     });
 
     const raw = completion.choices[0]?.message?.content ?? "";
 
-    return NextResponse.json({
-      success: true,
-      raw,
-    });
+    let parsed: {
+      reply: string;
+      qualification: {
+        interestLevel: string;
+        leadTemperature: string;
+        mainInterest: string;
+        budgetInfo: string;
+        timelineInfo: string;
+        qualifiedSummary: string;
+        handoffStatus: string;
+      };
+    };
+
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = {
+        reply: raw || "Olá! Posso entender melhor o que você procura?",
+        qualification: {
+          interestLevel: "baixo",
+          leadTemperature: "frio",
+          mainInterest: "não identificado",
+          budgetInfo: "não identificado",
+          timelineInfo: "não identificado",
+          qualifiedSummary: "resposta não veio em JSON válido",
+          handoffStatus: "PENDENTE",
+        },
+      };
+    }
+
+    return NextResponse.json(parsed);
   } catch (error) {
-    console.error(error);
+    console.error("Erro na rota incoming-message:", error);
 
     return NextResponse.json(
-      { error: "Erro ao processar mensagem" },
+      {
+        reply: "Desculpe, ocorreu um erro ao processar sua mensagem.",
+        qualification: {
+          interestLevel: "baixo",
+          leadTemperature: "frio",
+          mainInterest: "erro interno",
+          budgetInfo: "não identificado",
+          timelineInfo: "não identificado",
+          qualifiedSummary: "erro interno ao processar mensagem",
+          handoffStatus: "PENDENTE",
+        },
+      },
       { status: 500 }
     );
   }
