@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import LeadStatusForm from "../components/LeadStatusForm";
+
+export const dynamic = "force-dynamic";
 
 type LeadsPageProps = {
   searchParams: Promise<{
@@ -11,6 +14,18 @@ type LeadsPageProps = {
 };
 
 export default async function LeadsPage({ searchParams }: LeadsPageProps) {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-gray-500">
+          Usuário não autenticado.
+        </div>
+      </div>
+    );
+  }
+
   const { q, status, temp } = await searchParams;
 
   const search = q?.trim() || "";
@@ -19,6 +34,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
 
   const leads = await prisma.lead.findMany({
     where: {
+      userId,
       ...(search
         ? {
             OR: [
@@ -77,13 +93,13 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             name="q"
             defaultValue={search}
             placeholder="Buscar por nome ou telefone"
-            className="rounded-xl border border-gray-300 p-3 outline-none text-gray-900 placeholder-gray-500 md:col-span-2"
+            className="rounded-xl border border-gray-300 p-3 text-gray-900 outline-none placeholder-gray-500 md:col-span-2"
           />
 
           <select
             name="status"
             defaultValue={selectedStatus}
-            className="rounded-xl border border-gray-300 p-3 outline-none text-gray-900"
+            className="rounded-xl border border-gray-300 p-3 text-gray-900 outline-none"
           >
             <option value="TODOS">Todos os status</option>
             <option value="NOVO">NOVO</option>
@@ -95,7 +111,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
           <select
             name="temp"
             defaultValue={selectedTemp}
-            className="rounded-xl border border-gray-300 p-3 outline-none text-gray-900"
+            className="rounded-xl border border-gray-300 p-3 text-gray-900 outline-none"
           >
             <option value="TODOS">Todas temperaturas</option>
             <option value="frio">frio</option>
@@ -131,11 +147,8 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             Nenhum lead encontrado com esses filtros.
           </div>
         ) : (
-          leads.map((lead: any) => (
-            <div
-              key={lead.id}
-              className="rounded-2xl bg-white p-5 shadow"
-            >
+          leads.map((lead) => (
+            <div key={lead.id} className="rounded-2xl bg-white p-5 shadow">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex-1">
                   <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -149,8 +162,8 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                           lead.leadTemperature === "quente"
                             ? "bg-red-100 text-red-700"
                             : lead.leadTemperature === "morno"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-blue-100 text-blue-700"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-blue-100 text-blue-700"
                         }`}
                       >
                         {lead.leadTemperature}
@@ -175,12 +188,8 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                     <p>📧 {lead.email || "Não informado"}</p>
                     <p>🏢 {lead.company || "Não informada"}</p>
                     <p>📌 Status: {lead.status}</p>
-                    <p>
-                      🎯 Interesse: {lead.mainInterest || "não identificado"}
-                    </p>
-                    <p>
-                      🧠 Resumo: {lead.qualifiedSummary || "sem resumo"}
-                    </p>
+                    <p>🎯 Interesse: {lead.mainInterest || "não identificado"}</p>
+                    <p>🧠 Resumo: {lead.qualifiedSummary || "sem resumo"}</p>
                   </div>
 
                   <LeadStatusForm

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import LeadStatusForm from "./components/LeadStatusForm";
+import { UserButton } from "@clerk/nextjs";
 
 function getTemperatureBadge(temp?: string | null) {
   if (temp === "quente") return "bg-red-100 text-red-700 border-red-200";
@@ -39,6 +40,9 @@ export default async function Home() {
 
   return (
     <div className="mx-auto max-w-6xl">
+      <div className="flex justify-end p-4">
+        <UserButton />
+      </div>
       <h1 className="mb-8 text-3xl font-bold">Painel SDR IA</h1>
 
       <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-5">

@@ -1,16 +1,34 @@
 export const dynamic = "force-dynamic";
+
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+
 export default async function AnalyticsPage() {
-  const leads = await prisma.lead.findMany();
+  const { userId } = await auth();
+
+  if (!userId) {
+    return (
+      <div className="mx-auto max-w-6xl p-6">
+        <h1 className="mb-8 text-3xl font-bold">Analytics</h1>
+        <p className="text-gray-500">Usuário não autenticado.</p>
+      </div>
+    );
+  }
+
+  const leads = await prisma.lead.findMany({
+    where: {
+      userId,
+    },
+  });
 
   const total = leads.length;
-  const quentes = leads.filter((l: any) => l.handoffStatus === "PRONTO_CLOSER").length;
-  const mornos = leads.filter((l: any) => l.leadTemperature === "morno").length;
-  const frios = leads.filter((l: any) => l.leadTemperature === "frio").length;
-  const novos = leads.filter((l: any) => l.status === "NOVO").length;
+  const quentes = leads.filter((l) => l.handoffStatus === "PRONTO_CLOSER").length;
+  const mornos = leads.filter((l) => l.leadTemperature === "morno").length;
+  const frios = leads.filter((l) => l.leadTemperature === "frio").length;
+  const novos = leads.filter((l) => l.status === "NOVO").length;
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-6xl p-6">
       <h1 className="mb-8 text-3xl font-bold">Analytics</h1>
 
       <div className="grid gap-4 md:grid-cols-5">
