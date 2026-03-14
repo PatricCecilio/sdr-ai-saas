@@ -1,18 +1,21 @@
-export const dynamic = "force-dynamic";
-
-import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUserPlan } from "@/lib/subscription";
+import { auth } from "@clerk/nextjs/server";
+
+export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
   const { userId } = await auth();
 
   if (!userId) {
-    return (
-      <div className="mx-auto max-w-6xl p-6">
-        <h1 className="mb-8 text-3xl font-bold">Analytics</h1>
-        <p className="text-gray-500">Usuário não autenticado.</p>
-      </div>
-    );
+    redirect("/sign-in");
+  }
+
+  const { isPro } = await getCurrentUserPlan();
+
+  if (!isPro) {
+    redirect("/upgrade");
   }
 
   const leads = await prisma.lead.findMany({

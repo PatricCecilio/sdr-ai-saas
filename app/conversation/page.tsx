@@ -8,6 +8,9 @@ import {
   assumeHumanService,
   returnLeadToAI,
 } from "../actions";
+import { getCurrentUserPlan } from "@/lib/subscription";
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 
 type ConversationPageProps = {
   searchParams: Promise<{
@@ -24,8 +27,23 @@ export default async function ConversationPage({
     notFound();
   }
 
-  const lead = await prisma.lead.findUnique({
-    where: { id },
+  const { userId } = await auth();
+
+  if (!userId) {
+    redirect("/sign-in");
+  }
+
+  const { isPro } = await getCurrentUserPlan();
+
+  if (!isPro) {
+    redirect("/upgrade");
+  }
+
+  const lead = await prisma.lead.findFirst({
+    where: {
+      id: leadId,
+      userId,
+    },
     include: {
       messages: {
         orderBy: {

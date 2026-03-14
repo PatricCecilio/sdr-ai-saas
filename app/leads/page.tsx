@@ -2,6 +2,9 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import LeadStatusForm from "../components/LeadStatusForm";
+import { getCurrentUserPlan } from "@/lib/subscription";
+import { redirect } from "next/navigation";
+
 
 export const dynamic = "force-dynamic";
 
@@ -17,13 +20,13 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
   const { userId } = await auth();
 
   if (!userId) {
-    return (
-      <div className="mx-auto max-w-6xl">
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-gray-500">
-          Usuário não autenticado.
-        </div>
-      </div>
-    );
+    redirect("/sign-in");
+  }
+
+  const { isPro } = await getCurrentUserPlan();
+
+  if (!isPro) {
+    redirect("/upgrade");
   }
 
   const { q, status, temp } = await searchParams;
