@@ -11,10 +11,12 @@
   "dependencies": {
     "@clerk/nextjs": "^7.0.4",
     "@prisma/client": "^6.19.2",
+    "cloudinary": "^2.9.0",
     "next": "16.1.6",
-    "openai": "^6.27.0",
+    "openai": "^6.31.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "recharts": "^3.8.0",
     "stripe": "^20.4.1"
   },
   "devDependencies": {

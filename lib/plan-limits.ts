@@ -1,0 +1,2 @@
+export const FREE_PLAN_MAX_LEADS = 9999;
+export const FREE_PLAN_MAX_AI_MESSAGES = 9999;

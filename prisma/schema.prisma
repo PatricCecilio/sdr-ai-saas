@@ -7,54 +7,133 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Lead {
-  id               String    @id @default(uuid())
-  name             String
-  email            String?
-  phone            String?
-  company          String?
-  status           String    @default("NOVO")
-  userId           String
-  createdAt        DateTime  @default(now())
+model User {
+  id                String   @id
+  email             String   @unique
+  name              String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  interestLevel    String?
-  leadTemperature  String?
-  mainInterest     String?
-  budgetInfo       String?
-  timelineInfo     String?
-  qualifiedSummary String?
-  handoffStatus    String?   @default("PENDENTE")
+  termsAcceptedAt   DateTime?
+  privacyAcceptedAt DateTime?
+  trialStartedAt    DateTime?
+  trialEndsAt       DateTime?
+  accessStatus      String   @default("trial")
 
-  messages         Message[]
+  leads             Lead[]
+  userPlan          UserPlan?
+  connections       WhatsappConnection[]
+}
+
+model WhatsappConnection {
+  id                   String         @id @default(cuid())
+  userId               String
+  provider             String         @default("zapi")
+  instanceId           String
+  instanceToken        String
+  clientToken          String?
+  phoneNumber          String?
+  webhookSecret        String?
+  status               String         @default("pending")
+  isActive             Boolean        @default(true)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  companyCity          String?
+  companyDescription   String?
+  companyDifferentials String?
+  companyInstagram     String?
+  companyInstructions  String?
+  companyName          String?
+  companySegment       String?
+  companyServices      String?
+  companyToneOfVoice   String?
+  companyWebsite       String?
+  conversations        Conversation[]
+  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([instanceId, instanceToken])
+  @@index([userId])
+  @@map("WhatsappConnection")
+}
+
+model Conversation {
+  id              String             @id @default(cuid())
+  connectionId    String
+  contactPhone    String
+  contactName     String?
+  lastMessageAt   DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  companyName     String?
+  interest        String?
+  leadName        String?
+  leadTemperature String?
+  nextStep        String?
+  objective       String?
+  summary         String?
+  website         String?
+  assignedTo      String?
+  humanTakeover   Boolean            @default(false)
+  connection      WhatsappConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  messages        Message[]
+
+  @@index([connectionId])
+  @@index([contactPhone])
+  @@index([leadTemperature])
+  @@map("Conversation")
 }
 
 model Message {
-  id        String   @id @default(uuid())
-  leadId    String
-  role      String
-  content   String
-  createdAt DateTime @default(now())
+  id             String       @id @default(cuid())
+  leadId         String?
+  content        String
+  createdAt      DateTime     @default(now())
+  conversationId String
+  externalId     String?
+  fromMe         Boolean
+  messageType    String       @default("text")
+  senderPhone    String?
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  lead           Lead?        @relation(fields: [leadId], references: [id])
 
-  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-}
-
-model AiSettings {
-  id               String   @id @default(uuid())
-  companyName      String
-  tone             String   @default("amigável")
-  goal             String   @default("qualificar leads e encaminhar para closer")
-  extraInstructions String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  @@index([conversationId])
+  @@index([externalId])
+  @@index([leadId])
+  @@map("Message")
 }
 
 model UserPlan {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  stripeCustomerId String?  @unique
-  stripeSessionId  String?
-  stripePriceId    String?
-  stripeStatus     String   @default("free")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  plan      String   @default("free")
+  name      String?
+  phone     String?
+  email     String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("UserPlan")
+}
+
+model Lead {
+  id        String    @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  company   String?
+  status    String    @default("new")
+  createdAt DateTime  @default(now())
+  notes     String?
+  updatedAt DateTime  @updatedAt
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@index([userId])
+  @@index([email])
+  @@index([phone])
+  @@map("Lead")
 }

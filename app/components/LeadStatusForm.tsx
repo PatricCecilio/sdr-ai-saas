@@ -1,4 +1,4 @@
-import { updateLeadStatus } from "../actions";
+import { updateLead } from "@/app/actions";
 
 type LeadStatusFormProps = {
   leadId: string;
@@ -10,7 +10,7 @@ export default function LeadStatusForm({
   currentStatus,
 }: LeadStatusFormProps) {
   return (
-    <form action={updateLeadStatus} className="mt-3 flex items-center gap-2">
+    <form action={updateLead} className="mt-3 flex items-center gap-2">
       <input type="hidden" name="leadId" value={leadId} />
 
       <select

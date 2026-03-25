@@ -1,26 +1,16 @@
-import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"
 
-export async function getCurrentUserPlan() {
-  const { userId } = await auth();
+export async function getCurrentUserPlan(userId: string) {
 
-  if (!userId) {
+  const userPlan = await prisma.userPlan.findFirst({
+    where: { userId },
+  })
+
+  if (!userPlan) {
     return {
-      userId: null,
-      isPro: false,
-      plan: null,
-    };
+      plan: "free",
+    }
   }
 
-  const userPlan = await prisma.userPlan.findUnique({
-    where: { userId },
-  });
-
-  const isPro = userPlan?.stripeStatus === "active";
-
-  return {
-    userId,
-    isPro,
-    plan: userPlan ?? null,
-  };
+  return userPlan
 }
